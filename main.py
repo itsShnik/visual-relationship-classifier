@@ -33,7 +33,7 @@ def main():
     #mp.spawn(train, nprocs = config.N_GPU, args = (config, ))
     train(config)
 
-def train(gpu, config):
+def train(config):
 
     ###############################################
     #rank = config.NR * config.N_GPU + gpu
