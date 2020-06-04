@@ -5,10 +5,12 @@ import torch.utils.data as Data
 from net import Net
 import torch.optim as optim
 import time
+import wandb
 
 # the train engine here
 def train_engine(config, dataset, dataset_eval=None):
 
+    wandb.init(project="intern", name=config.VERSION, config=config)
     # here you will get all the things ffrom the dataset init
     data_size = dataset.data_size
     num_classes = dataset.num_rel_classes
@@ -35,6 +37,8 @@ def train_engine(config, dataset, dataset_eval=None):
     # define a loss function and an optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+
+    wandb.watch(net, log='all')
 
     # Training the net 
     for epoch in range(config.MAX_EPOCH):
@@ -75,6 +79,9 @@ def train_engine(config, dataset, dataset_eval=None):
                 loss
             ), end='    ')
 
+            wandb.log({
+                'Loss':loss
+                })
 
         time_end = time.time()
         time_taken = time_end-time_start
