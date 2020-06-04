@@ -30,18 +30,19 @@ def main():
     config = Config(args)
 
     # multiprocessing
-    mp.spawn(train, nprocs = config.N_GPU, args = (config, ))
+    #mp.spawn(train, nprocs = config.N_GPU, args = (config, ))
+    train(config)
 
 def train(gpu, config):
 
     ###############################################
-    rank = config.NR * config.N_GPU + gpu
-    dist.init_process_group(
-    	backend='nccl',
-   		init_method='env://',
-    	world_size=config.WORLD_SIZE,
-    	rank=rank
-    )
+    #rank = config.NR * config.N_GPU + gpu
+    #dist.init_process_group(
+    #	backend='nccl',
+    #    	init_method='env://',
+    #	world_size=config.WORLD_SIZE,
+    #	rank=rank
+    #)
     ###############################################
     # first loading the dataset
     print('Loading the training set')
@@ -55,7 +56,7 @@ def train(gpu, config):
 
     # train the model
     print('train engine called')
-    train_engine(gpu,rank, config, dataset, dataset_val)
+    train_engine(config, dataset, dataset_val)
 
 
 if __name__=='__main__':
