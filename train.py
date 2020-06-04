@@ -7,7 +7,7 @@ import torch.optim as optim
 import time
 
 # the train engine here
-def train_engine(gpu, rank, config, dataset, dataset_eval=None):
+def train_engine(config, dataset, dataset_eval=None):
 
     # here you will get all the things ffrom the dataset init
     data_size = dataset.data_size
@@ -15,28 +15,21 @@ def train_engine(gpu, rank, config, dataset, dataset_eval=None):
 
     # Next you'll have to create a Net
     net = Net(config, num_classes)
-    torch.cuda.set_device(gpu)
-    net.cuda(gpu)
+    net.cuda()
     net.train()
 
     # parallelization
     if config.N_GPU > 1:
-        net = nn.parallel.DistributedDataParallel(net, device_ids = [gpu])
+        net = nn.parallel.DataParallel(net, device_ids = config.GPUS)
 
-    # create a samplero
-    train_sampler = torch.utils.data.distributed.DistributedSampler(
-    	dataset,
-    	num_replicas=config.WORLD_SIZE,
-    	rank=rank
-    )
     # Then the dataset enumerator and batching
     dataloader = Data.DataLoader(
             dataset,
             batch_size = config.BATCH_SIZE,
-            shuffle=False,
+            shuffle=True,
             num_workers=0,
             pin_memory=True,
-            sampler = train_sampler
+            drop_last=True
         )
 
     # define a loss function and an optimizer
@@ -75,7 +68,6 @@ def train_engine(gpu, rank, config, dataset, dataset_eval=None):
             optimizer.step()
 
             # print at every step
-            #if gpu == 0:
             print("\r[Epoch: %2d][Step: %d/%d][Loss: %.4f]" % (
                 epoch + 1,
                 step,
@@ -86,38 +78,35 @@ def train_engine(gpu, rank, config, dataset, dataset_eval=None):
 
         time_end = time.time()
         time_taken = time_end-time_start
-        if gpu == 0:
-            print('Finished in {}s'.format(int(time_taken)))
+        print('Finished in {}s'.format(int(time_taken)))
 
         # saving the checkpoints
-        if gpu == 0:
-            if config.N_GPU > 1:
-                state = {
-                    'state_dict': net.module.state_dict(),
-                    'optimizer': optim.optimizer.state_dict(),
-                    'epoch': epoch+1
-                }
-            else:
-                state = {
-                    'state_dict': net.state_dict(),
-                    'optimizer': optim.optimizer.state_dict(),
-                    'epoch': epoch+1
-                }
+        if config.N_GPU > 1:
+            state = {
+                'state_dict': net.module.state_dict(),
+                'optimizer': optim.optimizer.state_dict(),
+                'epoch': epoch+1
+            }
+        else:
+            state = {
+                'state_dict': net.state_dict(),
+                'optimizer': optim.optimizer.state_dict(),
+                'epoch': epoch+1
+            }
 
-                torch.save(
-                    state,
-                    config.CKPTS_PATH + 
-                    '/ckpt_' + config.VERSION +
-                    '/epoch' + str(epoch+1) + 
-                    '.pkl'
-                )
+            torch.save(
+                state,
+                config.CKPTS_PATH + 
+                '/ckpt_' + config.VERSION +
+                '/epoch' + str(epoch+1) + 
+                '.pkl'
+            )
 
     # Calling the val function
-    if gpu == 0:
-        if dataset_eval is not None:
-            test_engine(
-                config,
-                dataset_eval,
-                state_dict=net.state_dict(),
-                validation=True
-            )
+    if dataset_eval is not None:
+        test_engine(
+            config,
+            dataset_eval,
+            state_dict=net.state_dict(),
+            validation=True
+        )
