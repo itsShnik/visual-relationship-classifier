@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from net import Net
+import wandb
 
 @torch.no_grad()
 def test_engine(config, dataset, state_dict, validation=True):
@@ -49,5 +50,9 @@ def test_engine(config, dataset, state_dict, validation=True):
         
         total += labels.size(0)
         correct += (pred_indices == labels).sum().item()
+
+    wandb.log({
+        'Accuracy':100.0 * correct/total
+        })
        
     print("Accuracy of the classifier is : %d / %d = %4f" % (correct, total, 100.0 * correct/total))
