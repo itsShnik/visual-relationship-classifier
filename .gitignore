@@ -6,3 +6,6 @@ data/*
 
 # pycache
 *pycache*
+
+# wandb files
+wandb/*
