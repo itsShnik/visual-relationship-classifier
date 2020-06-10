@@ -6,6 +6,23 @@ data/*
 
 # pycache
 *pycache*
+*.pyc
 
 # wandb files
 wandb/*
+
+# cached databases
+cache/*
+
+# output files
+output/*
+
+# build of roi pooling
+*build*
+
+# json and model files
+*.bin
+*.model
+
+# apex
+apex/*
