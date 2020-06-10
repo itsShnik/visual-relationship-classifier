@@ -1,0 +1,18 @@
+---
+EVAL_EVERY_EPOCH: True
+BATCH_SIZE: 512
+EVAL_BATCH_SIZE: 512
+RUN_MODE: 'train'
+NUM_WORKERS: 4
+MAX_EPOCH: 5
+PROJ_DIM: 512
+HIDDEN_DIM: 256
+GPUS: [0, 1, 2, 3, 4, 5, 6, 7]
+N_GPU: 8
+WORLD_SIZE: __C.N_GPU
+NR: 0
+USE_FRCNN_FEATURES: False
+TRAIN_PATH: './data/relationships_train.json'
+VAL_PATH: './data/relationships_val.json'
+IMAGES_PATH: './data/images/'
+REL_PATH: './data/relationship_classes.json'
