@@ -14,7 +14,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 #-----------------------------
 from vis_rel.data.dataloader import DatasetLoader
 from vis_rel.function.val import validate
-from vis_rel.modules.net import Net
+from vis_rel.modules.frcnn_classifier import Net
 
 #------------------------------
 # Other utilities imported
