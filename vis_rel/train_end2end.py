@@ -48,7 +48,7 @@ def main():
     args, config = parse_args()
     
     # create dir for checkpoints
-    rank, model = train_engine(args, config)
+    train_engine(args, config)
 
 
 if __name__=='__main__':
