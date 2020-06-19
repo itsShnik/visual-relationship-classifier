@@ -20,12 +20,19 @@ class DatasetLoader(Data.Dataset):
             self.rel = json.load(open(config.VAL_PATH))
             print("Loaded the validation relationships from json")
 
+        # toy dataset
+        # self.rel = self.rel[:1024]
+
         self.cls_to_ix = json.load(open(config.REL_PATH))
 
         self.num_rel_classes = self.cls_to_ix.__len__()
         # define the data size
         self.data_size = len(self.rel)
 
+        #if config.USE_FRCNN_FEATURES:
+        #    self.transform = transforms.ToTensor()
+
+        #else:
         # transforms and normalization
         self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], \
                 std=[0.229, 0.224, 0.225])
@@ -35,6 +42,7 @@ class DatasetLoader(Data.Dataset):
             transforms.ToTensor(),
             self.normalize,
         ])
+
 
     def load_regions(self, img, obj):
         # extract the region from the image
@@ -47,8 +55,10 @@ class DatasetLoader(Data.Dataset):
         x2, y2 = x1 + w, y1 + h
 
         # bbox
-        bbox = torch.tensor([x1, y1, x2, y2, w, h])
+        bbox = torch.tensor([x1, y1, x2, y2])
 
+        if self.config.USE_FRCNN_FEATURES:
+            return None, bbox
 
         # crop the region
         cropped_region = img.crop((x1, y1, x2, y2))
@@ -65,14 +75,20 @@ class DatasetLoader(Data.Dataset):
         w, h = x2 - x1, y2 - y1
 
         #bbox
-        bbox = torch.tensor([x1, y1, x2, y2, w, h])
+        bbox = torch.tensor([x1, y1, x2, y2])
+
+        if self.config.USE_FRCNN_FEATURES:
+            return None, bbox
 
         return img.crop((x1, y1, x2, y2)), bbox
 
     def load_image(self, path):
         img = Image.open(path)
         img = img.convert('RGB')
-        return img
+
+        im_info = torch.tensor(img.size)
+
+        return img, im_info
 
     def __getitem__(self, idx):
         # custom get item method goes here
@@ -80,20 +96,24 @@ class DatasetLoader(Data.Dataset):
         rel = self.rel[idx]
 
         # load the image
-        img = self.load_image(self.config.IMAGES_PATH + str(rel['image_id']) + '.jpg')
+        img, im_info = self.load_image(self.config.IMAGES_PATH + str(rel['image_id']) + '.jpg')
 
         # load the subject and objects
         subj, subj_bbox = self.load_regions(img, rel['subject'])
-        subj = self.transform(subj)
+        if subj is not None:
+            subj = self.transform(subj)
 
         obj, obj_bbox = self.load_regions(img, rel['object'])
-        obj = self.transform(obj)
+        if subj is not None:
+            obj = self.transform(obj)
 
         # the union of the regions
         union, union_bbox = self.load_regions_union(img, rel['subject'], rel['object'])
-        union = self.transform(union)
+        if subj is not None:
+            union = self.transform(union)
 
         img = self.transform(img)
+
         # the predicate gives the class
         labels = self.cls_to_ix[rel['predicate']]
 
@@ -111,9 +131,10 @@ class DatasetLoader(Data.Dataset):
         else:
             inputs = {
                 'image': img,
-                'subject_bbox': subj_bbox,
-                'object_bbox': obj_bbox,
-                'union_bbox': union_bbox
+                'subj_bbox': subj_bbox,
+                'obj_bbox': obj_bbox,
+                'union_bbox': union_bbox,
+                'im_info': im_info
             }
         # convert class labels to torch tensors
         labels = torch.tensor(labels)
