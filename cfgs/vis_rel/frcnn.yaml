@@ -1,0 +1,41 @@
+---
+EVAL_EVERY_EPOCH: True
+BATCH_SIZE: 64
+EVAL_BATCH_SIZE: 64
+RUN_MODE: 'train'
+NUM_WORKERS: 4
+MAX_EPOCH: 5
+FINAL_DIM: 768
+HIDDEN_DIM: 256
+GPUS: [0, 1, 2, 3]
+N_GPU: 4
+WORLD_SIZE: __C.N_GPU
+NR: 0
+USE_FRCNN_FEATURES: True
+TRAIN_PATH: './data/relationships_train.json'
+VAL_PATH: './data/relationships_val.json'
+IMAGES_PATH: './data/images/'
+REL_PATH: './data/relationship_classes.json'
+
+NETWORK:
+  IMAGE_NUM_LAYERS: 101
+  IMAGE_C5_DILATED: true
+  IMAGE_STRIDE_IN_1x1: true
+  PIXEL_MEANS:
+  - 102.9801
+  - 115.9465
+  - 122.7717
+  PIXEL_STDS:
+  - 1.0
+  - 1.0
+  - 1.0
+  IMAGE_FEAT_PRECOMPUTED: false
+  IMAGE_PRETRAINED: ''
+  IMAGE_PRETRAINED_EPOCH: 0
+  IMAGE_FROZEN_BACKBONE_STAGES:
+  - 1
+  - 2
+  IMAGE_FROZEN_BN: true
+  IMAGE_FINAL_DIM: 768
+  IMAGE_SEMANTIC: false
+  OUTPUT_CONV5: false
