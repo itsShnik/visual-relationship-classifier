@@ -23,6 +23,7 @@ _C.NR = 0
 _C.USE_FRCNN_FEATURES = False
 _C.TRAIN_PATH = './data/relationships_train.json'
 _C.VAL_PATH = './data/relationships_val.json'
+_C.TEST_PATH = './data/relationships_test.json'
 _C.IMAGES_PATH = './data/images/'
 _C.REL_PATH = './data/relationship_classes.json/'
 
@@ -195,7 +196,7 @@ _C.TEST.BATCH_IMAGES = 1
 
 def update_config(config_file):
     with open(config_file) as f:
-        exp_config = edict(yaml.load(f))
+        exp_config = edict(yaml.load(f, Loader=yaml.FullLoader))
         for k, v in exp_config.items():
             if k in config:
                 if isinstance(v, dict):
