@@ -82,7 +82,13 @@ def train_engine(args, config):
 
         # define a loss function and an optimizer
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+        #optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+        optimizer = optim.AdamW(model.parameters(),
+                          lr=5 * 1e-5,
+                          betas=(0.9, 0.999),
+                          eps=1e-6,
+                          weight_decay=1e-4,
+                      )
 
     else:
         #os.environ['CUDA_VISIBLE_DEVICES'] = config.GPUS
@@ -103,7 +109,13 @@ def train_engine(args, config):
 
         # define a loss function and an optimizer
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+        #optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+        optimizer = optim.AdamW(model.parameters(),
+                          lr=2*1e-6,
+                          betas=(0.9, 0.999),
+                          eps=1e-6,
+                          weight_decay=1e-4,
+                      )
 
     # Log all the layers in the net using wandb
     wandb.watch(model, log='all')
@@ -123,17 +135,26 @@ def train_engine(args, config):
     train_dataset = DatasetLoader(config)
     data_size = len(train_dataset)
 
-    # optionally the eval after every epoch
-    if config.EVAL_EVERY_EPOCH:
+    # eval after every epoch either on the test or the validation set
+    if config.RUN_MODE == 'train+val':
+        config_test = copy.deepcopy(config)
+        config_test.RUN_MODE = 'test'
+        val_dataset = DatasetLoader(config_test)
+        val_data_size = len(val_dataset)
+
+    elif config.EVAL_EVERY_EPOCH:
         config_val = copy.deepcopy(config)
         config_val.RUN_MODE = 'val'
-        val_dataset = DatasetLoader(config)
+        val_dataset = DatasetLoader(config_val)
         val_data_size = len(val_dataset)
 
 
     # if distributed training, create a train sampler
     if args.dist:
         train_sampler = Data.distributed.DistributedSampler(train_dataset)
+
+        if config.EVAL_EVERY_EPOCH:
+            val_sampler = Data.distributed.DistributedSampler(val_dataset)
     else:
         train_sampler = None
 
@@ -153,7 +174,7 @@ def train_engine(args, config):
             shuffle = False,
             num_workers = config.NUM_WORKERS,
             pin_memory = True,
-            sampler = None
+            sampler = val_sampler
         ) 
 
     # Training the net 
