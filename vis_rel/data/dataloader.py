@@ -11,14 +11,22 @@ class DatasetLoader(Data.Dataset):
         self.config = config
         # load all the files here
 
-        if config.RUN_MODE == 'train':
+        if 'train' in config.RUN_MODE.split('+'):
             # load the train relationships
             self.rel = json.load(open(config.TRAIN_PATH))
             print("Loaded the training relationships from json")
 
-        elif config.RUN_MODE == 'val':
-            self.rel = json.load(open(config.VAL_PATH))
+        if 'val' in config.RUN_MODE.split('+'):
+            if self.rel.__len__() > 0:
+                self.rel.extend(json.load(open(config.VAL_PATH)))
+            else:
+                self.rel = json.load(open(config.VAL_PATH))
             print("Loaded the validation relationships from json")
+
+        if config.RUN_MODE == 'test':
+            self.rel = json.load(open(config.TEST_PATH))
+            print("Loaded the test relationships from json")
+
 
         # toy dataset
         # self.rel = self.rel[:1024]
