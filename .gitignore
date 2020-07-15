@@ -26,3 +26,4 @@ output/*
 
 # apex
 apex/*
+.ipynb_checkpoints/*
