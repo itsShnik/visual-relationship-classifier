@@ -38,4 +38,4 @@ class Net(nn.Module):
         # classify into the classes
         pred = self.classifier(embedding)
         
-        return pred
+        return embedding, pred
