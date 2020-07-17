@@ -8,9 +8,7 @@ import numpy as np
 import glob
 import random
 import time
-import transforms as T
 from torchvision import transforms
-import utils
 import pickle
 import os
 import torch.nn as nn
@@ -113,7 +111,7 @@ model.load_state_dict(state_dict)
 print('Loaded the checkpoint')
 
 # define a threshold
-threshold = 0.6
+threshold = 0.75
 
 # dic
 dic = {}
@@ -125,6 +123,7 @@ with torch.no_grad():
         # now for every pair of objects in each image
 
 
+        rel_count = 0
         start_time = time.time()
         for i in range(len(boxes[0])):
             for j in range(len(boxes[0])):
@@ -139,31 +138,42 @@ with torch.no_grad():
 
                     feats, pred = model(inputs)
 
+                    # take softmax over the predictions
+                    pred = pred.softmax(-1)
+
                     # keep only those in which the max prob is greater than
                     # threshold and the class is not 21 (index 20)
                     keep = (torch.max(pred, -1).values > threshold) & (torch.argmax(pred,-1) < 20)
 
+
                     # things to save
                     save_image_id = image_id[keep]
+
+                    # Keep a rel_count
+                    rel_count += save_image_id.__len__()
+
                     save_feats = feats.detach().cpu()[keep]
                     save_pred = pred.detach().cpu()[keep]
                     save_subj_bbox = inputs['subj_bbox'][keep].clone().detach().cpu()
                     save_obj_bbox = inputs['obj_bbox'][keep].clone().detach().cpu()
 
+                    # create an empty list for each of the image
+                    for k in range(len(image_id)):
+                        if image_id[k] not in dic:
+                            dic[str(int(image_id[k]))] = []
+
                     # now append relevant bounding boxes of relevant images to their corresponding dictionary
                     for k in range(len(save_image_id)):
-                        if save_image_id[k] not in dic:
-                            dic[str(int(save_image_id[k]))] = []
                         dic[str(int(save_image_id[k]))].append({'feats':save_feats[k], 'subj_bbox':save_subj_bbox[k], 'obj_bbox':save_obj_bbox[k], 'pred':save_pred[k]})
 
         end_time = time.time()
 
-        print("Step {}/{}, Time taken is : {}".format(step, int(data_size/batch_size), end_time-start_time))
+        print("Step {}/{}, Time taken is : {}, Avg rel count is {}".format(step, int(data_size/batch_size), end_time-start_time, rel_count/batch_size))
                     
 
 # pickle the dic
 print('saving the relationships')
 for k,v in dic.items():
-    torch.save({k:v}, open(f'data/vqa_relationships/{str(k)}.pkl', 'wb'))
+    torch.save(v, open(f'data/vqa_relationships/{str(k)}.pkl', 'wb'))
 print('Done!')
 
