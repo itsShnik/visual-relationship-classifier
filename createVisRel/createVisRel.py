@@ -122,6 +122,10 @@ with torch.no_grad():
         image_id = image_id.detach().cpu()
         # now for every pair of objects in each image
 
+        # create an empty list for each of the image
+        for k in range(len(image_id)):
+            if str(int(image_id[k])) not in dic:
+                dic[str(int(image_id[k]))] = []
 
         rel_count = 0
         start_time = time.time()
@@ -156,11 +160,6 @@ with torch.no_grad():
                     save_pred = pred.detach().cpu()[keep]
                     save_subj_bbox = inputs['subj_bbox'][keep].clone().detach().cpu()
                     save_obj_bbox = inputs['obj_bbox'][keep].clone().detach().cpu()
-
-                    # create an empty list for each of the image
-                    for k in range(len(image_id)):
-                        if image_id[k] not in dic:
-                            dic[str(int(image_id[k]))] = []
 
                     # now append relevant bounding boxes of relevant images to their corresponding dictionary
                     for k in range(len(save_image_id)):
