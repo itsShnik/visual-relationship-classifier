@@ -19,3 +19,4 @@ tensorflow
 tqdm
 urllib3
 boto3
+wandb
